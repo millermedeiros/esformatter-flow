@@ -1,20 +1,21 @@
 {
   "name": "esformatter-flow",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "esformatter plugin to format Flow type annotations",
   "main": "esformatter-flow.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "disparity": "^2.0.0",
-    "esformatter": "^0.8.2",
     "lodash.defaultsdeep": "^4.0.2",
     "rocambole-indent": "^2.0.4",
     "rocambole-token": "^1.2.1",
     "rocambole-whitespace": "^1.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "disparity": "^2.0.0",
+    "esformatter": "^0.9.0"
+  },
   "scripts": {
     "test": "node test/compare.spec.js"
   },
