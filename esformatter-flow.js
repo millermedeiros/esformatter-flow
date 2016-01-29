@@ -5,6 +5,7 @@ var tk = require('rocambole-token');
 var ws = require('rocambole-whitespace');
 var defaultsDeep = require('lodash.defaultsdeep');
 
+var hooks = {};
 
 var defaultOptions = {
   'whiteSpace': {
@@ -36,56 +37,47 @@ function setOptions(opts) {
 
 exports.nodeAfter = formatNode;
 function formatNode(node) {
-  if (
-    'typeAnnotation' in node &&
-    node.typeAnnotation.type === 'TypeAnnotation'
-  ) {
-    formatTypeAnnotation(node.typeAnnotation);
-  } else if ('returnType' in node) {
-    formatReturnType(node.returnType);
+  if (node.type in hooks) {
+    hooks[node.type](node);
+  }
+
+  if ('returnType' in node) {
+    ws.limit(node.returnType.startToken, 'ReturnTypeColon');
   }
 }
 
-function formatTypeAnnotation(node) {
+hooks.TypeAnnotation = function(node) {
   ws.limit(node.startToken, 'TypeAnnotationColon');
+};
 
-  var typeAnnotation = node.typeAnnotation;
+hooks.NullableTypeAnnotation = function(node) {
+  // ?number
+  ws.limit(
+    node.startToken,
+    'NullableTypeAnnotationQuestionMark'
+  );
+};
 
-  switch (typeAnnotation.type) {
-    case 'NullableTypeAnnotation':
-      // ?number
-      ws.limit(
-        typeAnnotation.startToken,
-        'NullableTypeAnnotationQuestionMark'
-      );
-      break;
+hooks.GenericTypeAnnotation = function(node) {
+  // Array<number>
+  var typeParameters = node.typeParameters;
+  ws.limit(
+    typeParameters.startToken,
+    'GenericTypeAnnotationOpeningChevron'
+  );
+  // TODO: handle multiple typeParameters.params
+  ws.limit(
+    typeParameters.endToken,
+    'GenericTypeAnnotationClosingChevron'
+  );
+};
 
-    case 'GenericTypeAnnotation':
-      var typeParameters = typeAnnotation.typeParameters;
-      // Array<number>
-      ws.limit(
-        typeParameters.startToken,
-        'GenericTypeAnnotationOpeningChevron'
-      );
-      // TODO: handle multiple typeParameters.params
-      ws.limit(
-        typeParameters.endToken,
-        'GenericTypeAnnotationClosingChevron'
-      );
-      break;
-
-    case 'UnionTypeAnnotation':
-      typeAnnotation.types.forEach((type, i) => {
-        if (!i) return;
-        ws.limit(
-          tk.findPrev(type.startToken, '|'),
-          'UnionTypeAnnotationPipe'
-        );
-      });
-      break;
-  }
-}
-
-function formatReturnType(node) {
-  ws.limit(node.startToken, 'ReturnTypeColon');
-}
+hooks.UnionTypeAnnotation = function(node) {
+  node.types.forEach(function(type, i) {
+    if (!i) return;
+    ws.limit(
+      tk.findPrev(type.startToken, '|'),
+      'UnionTypeAnnotationPipe'
+    );
+  });
+};
