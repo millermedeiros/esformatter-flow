@@ -57,3 +57,24 @@ declare class C{
 declare module M  {
   declare function foo (c:C,d:D ) : void;
 }
+
+// ObjectTypeAnnotation
+// --------------------
+
+type Message = {
+id:string ;
+      text : string;
+  foo: ? number;
+};
+
+function foo(): {
+id: string ;
+    text :string  ;
+  foo: ?number;
+}{
+return bar;
+}
+
+function foo2(): { id:string ,text : string, foo : ?number }{
+  return bar;
+}

@@ -25,6 +25,9 @@ var defaultOptions = {
       'NullableTypeAnnotationQuestionMark': 1,
       'ObjectTypeAnnotationClosing': 0,
       'ObjectTypeAnnotationOpening': 1,
+      'ObjectTypePropertyColon': 0,
+      'ObjectTypePropertyComma': 0,
+      'ObjectTypePropertySemiColon': 0,
       'ReturnTypeColon': 0,
       'TypeAliasOperator': 1,
       'TypeAnnotationColon': 0,
@@ -43,6 +46,9 @@ var defaultOptions = {
       'IntersectionTypeAnnotationOperator': 1,
       'ObjectTypeAnnotationClosing': 0,
       'ObjectTypeAnnotationOpening': 0,
+      'ObjectTypePropertyColon': 1,
+      'ObjectTypePropertyComma': 1,
+      'ObjectTypePropertySemiColon': 1,
       'NullableTypeAnnotationQuestionMark': 0,
       'ReturnTypeColon': 1,
       'TypeAliasOperator': 1,
@@ -181,6 +187,20 @@ hooks.ObjectTypeAnnotation = function(node) {
   ws.limit(node.startToken, 'ObjectTypeAnnotationOpening');
   ws.limit(node.endToken, 'ObjectTypeAnnotationClosing');
   indentNode(node);
+};
+
+hooks.ObjectTypeProperty = function(node) {
+  ws.limit(
+    tk.findNext(node.startToken, ':'),
+    'ObjectTypePropertyColon'
+  );
+
+  var prevToken = tk.findPrevNonEmpty(node.startToken);
+  if (tk.isComma(prevToken)) {
+    ws.limit(prevToken, 'ObjectTypePropertyComma');
+  } else if (tk.isSemiColon(prevToken)) {
+    ws.limit(prevToken, 'ObjectTypePropertySemiColon');
+  }
 };
 
 hooks.DeclareModule = function(node) {
