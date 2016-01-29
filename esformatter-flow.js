@@ -11,16 +11,28 @@ var defaultOptions = {
   'whiteSpace': {
     'value': ' ',
     'before': {
+      'FunctionTypeAnnotationArrow': 1,
+      'FunctionTypeParamColon': 0,
+      'FunctionTypeParamsClosing': 0,
+      'FunctionTypeParamsComma': 0,
+      'FunctionTypeParamsOpening': 0,
       'GenericTypeAnnotationClosingChevron': 0,
       'GenericTypeAnnotationOpeningChevron': 0,
+      'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 1,
       'ReturnTypeColon': 0,
       'TypeAnnotationColon': 0,
       'UnionTypeAnnotationOperator': 1
     },
     'after': {
+      'FunctionTypeAnnotationArrow': 1,
+      'FunctionTypeParamColon': 1,
+      'FunctionTypeParamsClosing': 1,
+      'FunctionTypeParamsComma': 1,
+      'FunctionTypeParamsOpening': 0,
       'GenericTypeAnnotationClosingChevron': 1,
       'GenericTypeAnnotationOpeningChevron': 0,
+      'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 0,
       'ReturnTypeColon': 1,
       'TypeAnnotationColon': 1,
@@ -42,9 +54,15 @@ function formatNode(node) {
   }
 
   if ('returnType' in node) {
-    ws.limit(node.returnType.startToken, 'ReturnTypeColon');
+    hooks.returnType(node.returnType);
   }
 }
+
+hooks.returnType = function(node) {
+  if (node.startToken.value === ':') {
+    ws.limit(node.startToken, 'ReturnTypeColon');
+  }
+};
 
 hooks.TypeAnnotation = function(node) {
   ws.limit(node.startToken, 'TypeAnnotationColon');
@@ -59,8 +77,11 @@ hooks.NullableTypeAnnotation = function(node) {
 };
 
 hooks.GenericTypeAnnotation = function(node) {
-  // Array<number>
+  // Foo
   var typeParameters = node.typeParameters;
+  if (!typeParameters) return;
+
+  // Array<number>
   ws.limit(
     typeParameters.startToken,
     'GenericTypeAnnotationOpeningChevron'
@@ -73,6 +94,7 @@ hooks.GenericTypeAnnotation = function(node) {
 };
 
 hooks.UnionTypeAnnotation = function(node) {
+  // Foo | Bar
   node.types.forEach(function(type, i) {
     if (!i) return;
     ws.limit(
@@ -81,3 +103,58 @@ hooks.UnionTypeAnnotation = function(node) {
     );
   });
 };
+
+hooks.IntersectionTypeAnnotation = function(node) {
+  // Foo & Bar
+  node.types.forEach(function(type, i) {
+    if (!i) return;
+    ws.limit(
+      tk.findPrev(type.startToken, '&'),
+      'IntersectionTypeAnnotationOperator'
+    );
+  });
+};
+
+hooks.FunctionTypeParam = function(node) {
+  ws.limit(
+    tk.findNext(node.startToken, ':'),
+    'FunctionTypeParamColon'
+  );
+
+  var prevToken = tk.findPrevNonEmpty(node.startToken);
+  if (tk.isComma(prevToken)) {
+    ws.limit(prevToken, 'FunctionTypeParamsComma');
+  }
+};
+
+hooks.FunctionTypeAnnotation = function(node) {
+  handleSurroundingParenthesis(node);
+
+  ws.limit(
+    node.startToken,
+    'FunctionTypeParamsOpening'
+  );
+
+  var endOfLastParam = node.params.length ?
+    node.params[node.params.length - 1].endToken :
+    node.startToken;
+
+  ws.limit(
+    tk.findNext(endOfLastParam, ')'),
+    'FunctionTypeParamsClosing'
+  );
+
+  ws.limit(
+    tk.findNext(endOfLastParam, '=>'),
+    'FunctionTypeAnnotationArrow'
+  );
+};
+
+function handleSurroundingParenthesis(node) {
+  var prev = tk.findPrevNonEmpty(node.startToken);
+  var next = tk.findNextNonEmpty(node.endToken);
+  if (prev.value === '(' && next.value === ')') {
+    ws.limit(prev, 0);
+    ws.limit(next, 0);
+  }
+}

@@ -35,3 +35,10 @@ var b: Array < number > = a.map(x => x + 1);
 
 var x: number|string = 0;
 
+// intersection and FunctionTypeAnnotation
+// ---------------------------------------
+
+declare var f: (( x :  Foo  ) => void)&((x: Bar) => void);
+var a : ()=>number;
+var b : (  num:number ,isFoo : boolean)  =>  number;
+
