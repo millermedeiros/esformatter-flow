@@ -78,3 +78,10 @@ function foo(): {
 function foo2(): {id: string, text: string, foo: ?number} {
   return bar;
 }
+
+// ImportDeclaration
+// -----------------
+
+import type {Foo} from 'FoooBar';
+import type {Foo, Bar, Baz} from 'FoooBar';
+import type Dolor from 'Dolor';

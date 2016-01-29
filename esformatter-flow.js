@@ -21,6 +21,11 @@ var defaultOptions = {
       'FunctionTypeParamsOpening': 0,
       'GenericTypeAnnotationClosingChevron': 0,
       'GenericTypeAnnotationOpeningChevron': 0,
+      'ImportFromKeyword': 1,
+      'ImportTypeKeyword': 1,
+      'ImportSpecifierClosing': 0,
+      'ImportSpecifierComma': 0,
+      'ImportSpecifierOpening': 1,
       'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 1,
       'ObjectTypeAnnotationClosing': 0,
@@ -43,6 +48,11 @@ var defaultOptions = {
       'FunctionTypeParamsOpening': 0,
       'GenericTypeAnnotationClosingChevron': 1,
       'GenericTypeAnnotationOpeningChevron': 0,
+      'ImportFromKeyword': 1,
+      'ImportTypeKeyword': 1,
+      'ImportSpecifierClosing': 0,
+      'ImportSpecifierComma': 1,
+      'ImportSpecifierOpening': 0,
       'IntersectionTypeAnnotationOperator': 1,
       'ObjectTypeAnnotationClosing': 0,
       'ObjectTypeAnnotationOpening': 0,
@@ -214,6 +224,39 @@ hooks.DeclareModule = function(node) {
   );
   indentNode(node.body);
 };
+
+hooks.ImportDeclaration = function(node) {
+  if (node.importKind !== 'type') return;
+
+  var first = node.specifiers[0];
+  if (first.type !== 'ImportDefaultSpecifier') {
+    var opening = tk.findPrev(first.startToken, '{');
+    var closing = tk.findNext(first.endToken, '}');
+
+    node.specifiers.forEach(function(spec) {
+      var next = tk.findNextNonEmpty(spec.endToken);
+      if (tk.isComma(next)) {
+        ws.limit(next, 'ImportSpecifierComma');
+      }
+    });
+
+    ws.limit(opening, 'ImportSpecifierOpening');
+    ws.limit(closing, 'ImportSpecifierClosing');
+
+    indentNode({startToken: opening, endToken: closing});
+  }
+
+  ws.limit(
+    tk.findNext(node.startToken, 'type'),
+    'ImportTypeKeyword'
+  );
+
+  ws.limit(
+    tk.findPrev(node.endToken, 'from'),
+    'ImportFromKeyword'
+  );
+};
+
 
 function handleSurroundingParenthesis(node) {
   var prev = tk.findPrevNonEmpty(node.startToken);
