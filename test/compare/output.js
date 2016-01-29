@@ -1,8 +1,7 @@
 /* @flow */
 
 // basic
-// ----------------------------------------------
-// http://flowtype.org/docs/type-annotations.html
+// -----
 
 function add(num1: number, num2: number): number {
   return num1 + num2;
@@ -21,21 +20,18 @@ class Bar {
 }
 
 // maybe types
-// ----------------------------------------------
-// http://flowtype.org/docs/nullable-types.html
+// -----------
 
 var o: ?string = null;
 
 // arrays
-// ------------------------------------
-// http://flowtype.org/docs/arrays.html
+// ------
 
 var a = [1, 2, 3];
 var b: Array<number> = a.map(x => x + 1);
 
 // union types
-// -----------------------------------------------------
-//http://flowtype.org/docs/union-intersection-types.html
+// -----------
 
 var x: number | string = 0;
 
