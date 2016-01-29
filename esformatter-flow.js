@@ -1,9 +1,10 @@
 //jshint node:true, eqnull:true
 'use strict';
 
+var defaultsDeep = require('lodash.defaultsdeep');
+var indent = require('rocambole-indent');
 var tk = require('rocambole-token');
 var ws = require('rocambole-whitespace');
-var defaultsDeep = require('lodash.defaultsdeep');
 
 var hooks = {};
 
@@ -11,6 +12,8 @@ var defaultOptions = {
   'whiteSpace': {
     'value': ' ',
     'before': {
+      'DeclareModuleClosing': 0,
+      'DeclareModuleOpening': 1,
       'FunctionTypeAnnotationArrow': 1,
       'FunctionTypeParamColon': 0,
       'FunctionTypeParamsClosing': 0,
@@ -20,12 +23,16 @@ var defaultOptions = {
       'GenericTypeAnnotationOpeningChevron': 0,
       'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 1,
+      'ObjectTypeAnnotationClosing': 0,
+      'ObjectTypeAnnotationOpening': 1,
       'ReturnTypeColon': 0,
       'TypeAliasOperator': 1,
       'TypeAnnotationColon': 0,
       'UnionTypeAnnotationOperator': 1
     },
     'after': {
+      'DeclareModuleClosing': 0,
+      'DeclareModuleOpening': 0,
       'FunctionTypeAnnotationArrow': 1,
       'FunctionTypeParamColon': 1,
       'FunctionTypeParamsClosing': 1,
@@ -34,6 +41,8 @@ var defaultOptions = {
       'GenericTypeAnnotationClosingChevron': 1,
       'GenericTypeAnnotationOpeningChevron': 0,
       'IntersectionTypeAnnotationOperator': 1,
+      'ObjectTypeAnnotationClosing': 0,
+      'ObjectTypeAnnotationOpening': 0,
       'NullableTypeAnnotationQuestionMark': 0,
       'ReturnTypeColon': 1,
       'TypeAliasOperator': 1,
@@ -61,13 +70,18 @@ function formatNode(node) {
 }
 
 hooks.returnType = function(node) {
-  if (node.startToken.value === ':') {
-    ws.limit(node.startToken, 'ReturnTypeColon');
+  var colon = node.startToken.value === ':' ?
+    node.startToken :
+    tk.findPrevNonEmpty(node.startToken);
+  if (colon.value === ':') {
+    ws.limit(colon, 'ReturnTypeColon');
   }
 };
 
 hooks.TypeAnnotation = function(node) {
-  ws.limit(node.startToken, 'TypeAnnotationColon');
+  if (node.startToken.value === ':') {
+    ws.limit(node.startToken, 'TypeAnnotationColon');
+  }
 };
 
 hooks.NullableTypeAnnotation = function(node) {
@@ -132,24 +146,28 @@ hooks.FunctionTypeParam = function(node) {
 hooks.FunctionTypeAnnotation = function(node) {
   handleSurroundingParenthesis(node);
 
-  ws.limit(
-    node.startToken,
-    'FunctionTypeParamsOpening'
-  );
+  var opening = node.startToken.value === '(' ?
+    node.startToken :
+    tk.findNext(node.startToken, '(');
+  ws.limit(opening, 'FunctionTypeParamsOpening');
 
   var endOfLastParam = node.params.length ?
     node.params[node.params.length - 1].endToken :
-    node.startToken;
+    opening;
 
   ws.limit(
     tk.findNext(endOfLastParam, ')'),
     'FunctionTypeParamsClosing'
   );
 
-  ws.limit(
-    tk.findNext(endOfLastParam, '=>'),
-    'FunctionTypeAnnotationArrow'
+  var arrow = tk.findInBetween(
+    endOfLastParam,
+    node.returnType.startToken,
+    '=>'
   );
+  if (arrow) {
+    ws.limit(arrow, 'FunctionTypeAnnotationArrow');
+  }
 };
 
 hooks.TypeAlias = function(node) {
@@ -159,6 +177,24 @@ hooks.TypeAlias = function(node) {
   );
 };
 
+hooks.ObjectTypeAnnotation = function(node) {
+  ws.limit(node.startToken, 'ObjectTypeAnnotationOpening');
+  ws.limit(node.endToken, 'ObjectTypeAnnotationClosing');
+  indentNode(node);
+};
+
+hooks.DeclareModule = function(node) {
+  ws.limit(
+    node.body.startToken,
+    'DeclareModuleOpening'
+  );
+  ws.limit(
+    node.body.endToken,
+    'DeclareModuleClosing'
+  );
+  indentNode(node.body);
+};
+
 function handleSurroundingParenthesis(node) {
   var prev = tk.findPrevNonEmpty(node.startToken);
   var next = tk.findNextNonEmpty(node.endToken);
@@ -166,4 +202,8 @@ function handleSurroundingParenthesis(node) {
     ws.limit(prev, 0);
     ws.limit(next, 0);
   }
+}
+
+function indentNode(node) {
+  indent.inBetween(node.startToken, node.endToken, 1);
 }

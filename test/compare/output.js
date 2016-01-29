@@ -47,3 +47,13 @@ var b: (num: number, isFoo: boolean) => number;
 
 type T = number;
 var x: T = 0;
+
+// declarations
+// ------------
+
+declare class C {
+  x: string;
+}
+declare module M {
+  declare function foo(c: C, d: D): void;
+}
