@@ -16,7 +16,7 @@ var defaultOptions = {
       'NullableTypeAnnotationQuestionMark': 1,
       'ReturnTypeColon': 0,
       'TypeAnnotationColon': 0,
-      'UnionTypeAnnotationPipe': 1
+      'UnionTypeAnnotationOperator': 1
     },
     'after': {
       'GenericTypeAnnotationClosingChevron': 1,
@@ -24,7 +24,7 @@ var defaultOptions = {
       'NullableTypeAnnotationQuestionMark': 0,
       'ReturnTypeColon': 1,
       'TypeAnnotationColon': 1,
-      'UnionTypeAnnotationPipe': 1
+      'UnionTypeAnnotationOperator': 1
     }
   }
 };
@@ -77,7 +77,7 @@ hooks.UnionTypeAnnotation = function(node) {
     if (!i) return;
     ws.limit(
       tk.findPrev(type.startToken, '|'),
-      'UnionTypeAnnotationPipe'
+      'UnionTypeAnnotationOperator'
     );
   });
 };
