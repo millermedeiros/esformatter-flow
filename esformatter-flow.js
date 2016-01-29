@@ -8,11 +8,15 @@ var ws = require('rocambole-whitespace');
 ws.setOptions({
   'value': ' ',
   'before': {
+    'GenericTypeAnnotationClosingChevron': 0,
+    'GenericTypeAnnotationOpeningChevron': 0,
     'NullableTypeAnnotationQuestionMark': 1,
     'ReturnTypeColon': 0,
     'TypeAnnotationColon': 0,
   },
   'after': {
+    'GenericTypeAnnotationClosingChevron': 1,
+    'GenericTypeAnnotationOpeningChevron': 0,
     'NullableTypeAnnotationQuestionMark': 0,
     'ReturnTypeColon': 1,
     'TypeAnnotationColon': 1,
@@ -29,15 +33,35 @@ function formatNode(node) {
 }
 
 function formatTypeAnnotation(node) {
-  if (node.type === 'TypeAnnotation') {
-    ws.limit(node.startToken, 'TypeAnnotationColon');
+  if (node.type !== 'TypeAnnotation') {
+    return;
+  }
 
-    if (node.typeAnnotation.type === 'NullableTypeAnnotation') {
+  ws.limit(node.startToken, 'TypeAnnotationColon');
+
+  var typeAnnotation = node.typeAnnotation;
+
+  switch (typeAnnotation.type) {
+    case 'NullableTypeAnnotation':
+      // ?number
       ws.limit(
-        node.typeAnnotation.startToken,
+        typeAnnotation.startToken,
         'NullableTypeAnnotationQuestionMark'
       );
-    }
+      break;
+    case 'GenericTypeAnnotation':
+      var typeParameters = typeAnnotation.typeParameters;
+      // Array<number>
+      ws.limit(
+        typeParameters.startToken,
+        'GenericTypeAnnotationOpeningChevron'
+      );
+      // TODO: handle multiple typeParameters.params
+      ws.limit(
+        typeParameters.endToken,
+        'GenericTypeAnnotationClosingChevron'
+      );
+      break;
   }
 }
 

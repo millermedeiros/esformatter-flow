@@ -25,3 +25,11 @@ class Bar {
 // http://flowtype.org/docs/nullable-types.html
 
 var o :  ?  string = null;
+
+// arrays
+// ------------------------------------
+// http://flowtype.org/docs/arrays.html
+
+var a = [1, 2, 3];
+var b: Array < number > = a.map(x => x + 1);
+
