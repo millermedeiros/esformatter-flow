@@ -33,3 +33,9 @@ var o: ?string = null;
 var a = [1, 2, 3];
 var b: Array<number> = a.map(x => x + 1);
 
+// union types
+// -----------------------------------------------------
+//http://flowtype.org/docs/union-intersection-types.html
+
+var x: number | string = 0;
+

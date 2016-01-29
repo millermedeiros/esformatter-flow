@@ -13,6 +13,7 @@ ws.setOptions({
     'NullableTypeAnnotationQuestionMark': 1,
     'ReturnTypeColon': 0,
     'TypeAnnotationColon': 0,
+    'UnionTypeAnnotationPipe': 1
   },
   'after': {
     'GenericTypeAnnotationClosingChevron': 1,
@@ -20,12 +21,16 @@ ws.setOptions({
     'NullableTypeAnnotationQuestionMark': 0,
     'ReturnTypeColon': 1,
     'TypeAnnotationColon': 1,
+    'UnionTypeAnnotationPipe': 1
   }
 });
 
 exports.nodeAfter = formatNode;
 function formatNode(node) {
-  if ('typeAnnotation' in node) {
+  if (
+    'typeAnnotation' in node &&
+    node.typeAnnotation.type === 'TypeAnnotation'
+  ) {
     formatTypeAnnotation(node.typeAnnotation);
   } else if ('returnType' in node) {
     formatReturnType(node.returnType);
@@ -33,10 +38,6 @@ function formatNode(node) {
 }
 
 function formatTypeAnnotation(node) {
-  if (node.type !== 'TypeAnnotation') {
-    return;
-  }
-
   ws.limit(node.startToken, 'TypeAnnotationColon');
 
   var typeAnnotation = node.typeAnnotation;
@@ -49,6 +50,7 @@ function formatTypeAnnotation(node) {
         'NullableTypeAnnotationQuestionMark'
       );
       break;
+
     case 'GenericTypeAnnotation':
       var typeParameters = typeAnnotation.typeParameters;
       // Array<number>
@@ -61,6 +63,16 @@ function formatTypeAnnotation(node) {
         typeParameters.endToken,
         'GenericTypeAnnotationClosingChevron'
       );
+      break;
+
+    case 'UnionTypeAnnotation':
+      typeAnnotation.types.forEach((type, i) => {
+        if (!i) return;
+        ws.limit(
+          tk.findPrev(type.startToken, '|'),
+          'UnionTypeAnnotationPipe'
+        );
+      });
       break;
   }
 }
