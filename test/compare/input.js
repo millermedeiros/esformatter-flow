@@ -42,3 +42,8 @@ declare var f: (( x :  Foo  ) => void)&((x: Bar) => void);
 var a : ()=>number;
 var b : (  num:number ,isFoo : boolean)  =>  number;
 
+// aliases
+// -------
+
+type T=number;
+var x: T = 0;

@@ -21,6 +21,7 @@ var defaultOptions = {
       'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 1,
       'ReturnTypeColon': 0,
+      'TypeAliasOperator': 1,
       'TypeAnnotationColon': 0,
       'UnionTypeAnnotationOperator': 1
     },
@@ -35,6 +36,7 @@ var defaultOptions = {
       'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 0,
       'ReturnTypeColon': 1,
+      'TypeAliasOperator': 1,
       'TypeAnnotationColon': 1,
       'UnionTypeAnnotationOperator': 1
     }
@@ -147,6 +149,13 @@ hooks.FunctionTypeAnnotation = function(node) {
   ws.limit(
     tk.findNext(endOfLastParam, '=>'),
     'FunctionTypeAnnotationArrow'
+  );
+};
+
+hooks.TypeAlias = function(node) {
+  ws.limit(
+    tk.findNext(node.startToken, '='),
+    'TypeAliasOperator'
   );
 };
 
