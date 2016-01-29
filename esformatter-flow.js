@@ -7,6 +7,7 @@ var tk = require('rocambole-token');
 var ws = require('rocambole-whitespace');
 
 var hooks = {};
+var whiteSpaceOptions;
 
 var defaultOptions = {
   'whiteSpace': {
@@ -70,8 +71,8 @@ var defaultOptions = {
 
 exports.setOptions = setOptions;
 function setOptions(opts) {
-  var options = defaultsDeep({}, opts.flow, defaultOptions);
-  ws.setOptions(options.whiteSpace);
+  var o = defaultsDeep({}, opts.flow, defaultOptions);
+  whiteSpaceOptions = o.whiteSpace;
 }
 
 exports.nodeAfter = formatNode;
@@ -90,19 +91,19 @@ hooks.returnType = function(node) {
     node.startToken :
     tk.findPrevNonEmpty(node.startToken);
   if (colon.value === ':') {
-    ws.limit(colon, 'ReturnTypeColon');
+    limit(colon, 'ReturnTypeColon');
   }
 };
 
 hooks.TypeAnnotation = function(node) {
   if (node.startToken.value === ':') {
-    ws.limit(node.startToken, 'TypeAnnotationColon');
+    limit(node.startToken, 'TypeAnnotationColon');
   }
 };
 
 hooks.NullableTypeAnnotation = function(node) {
   // ?number
-  ws.limit(
+  limit(
     node.startToken,
     'NullableTypeAnnotationQuestionMark'
   );
@@ -114,12 +115,12 @@ hooks.GenericTypeAnnotation = function(node) {
   if (!typeParameters) return;
 
   // Array<number>
-  ws.limit(
+  limit(
     typeParameters.startToken,
     'GenericTypeAnnotationOpeningChevron'
   );
   // TODO: handle multiple typeParameters.params
-  ws.limit(
+  limit(
     typeParameters.endToken,
     'GenericTypeAnnotationClosingChevron'
   );
@@ -129,7 +130,7 @@ hooks.UnionTypeAnnotation = function(node) {
   // Foo | Bar
   node.types.forEach(function(type, i) {
     if (!i) return;
-    ws.limit(
+    limit(
       tk.findPrev(type.startToken, '|'),
       'UnionTypeAnnotationOperator'
     );
@@ -140,7 +141,7 @@ hooks.IntersectionTypeAnnotation = function(node) {
   // Foo & Bar
   node.types.forEach(function(type, i) {
     if (!i) return;
-    ws.limit(
+    limit(
       tk.findPrev(type.startToken, '&'),
       'IntersectionTypeAnnotationOperator'
     );
@@ -148,14 +149,14 @@ hooks.IntersectionTypeAnnotation = function(node) {
 };
 
 hooks.FunctionTypeParam = function(node) {
-  ws.limit(
+  limit(
     tk.findNext(node.startToken, ':'),
     'FunctionTypeParamColon'
   );
 
   var prevToken = tk.findPrevNonEmpty(node.startToken);
   if (tk.isComma(prevToken)) {
-    ws.limit(prevToken, 'FunctionTypeParamsComma');
+    limit(prevToken, 'FunctionTypeParamsComma');
   }
 };
 
@@ -165,13 +166,13 @@ hooks.FunctionTypeAnnotation = function(node) {
   var opening = node.startToken.value === '(' ?
     node.startToken :
     tk.findNext(node.startToken, '(');
-  ws.limit(opening, 'FunctionTypeParamsOpening');
+  limit(opening, 'FunctionTypeParamsOpening');
 
   var endOfLastParam = node.params.length ?
     node.params[node.params.length - 1].endToken :
     opening;
 
-  ws.limit(
+  limit(
     tk.findNext(endOfLastParam, ')'),
     'FunctionTypeParamsClosing'
   );
@@ -182,43 +183,43 @@ hooks.FunctionTypeAnnotation = function(node) {
     '=>'
   );
   if (arrow) {
-    ws.limit(arrow, 'FunctionTypeAnnotationArrow');
+    limit(arrow, 'FunctionTypeAnnotationArrow');
   }
 };
 
 hooks.TypeAlias = function(node) {
-  ws.limit(
+  limit(
     tk.findNext(node.startToken, '='),
     'TypeAliasOperator'
   );
 };
 
 hooks.ObjectTypeAnnotation = function(node) {
-  ws.limit(node.startToken, 'ObjectTypeAnnotationOpening');
-  ws.limit(node.endToken, 'ObjectTypeAnnotationClosing');
+  limit(node.startToken, 'ObjectTypeAnnotationOpening');
+  limit(node.endToken, 'ObjectTypeAnnotationClosing');
   indentNode(node);
 };
 
 hooks.ObjectTypeProperty = function(node) {
-  ws.limit(
+  limit(
     tk.findNext(node.startToken, ':'),
     'ObjectTypePropertyColon'
   );
 
   var prevToken = tk.findPrevNonEmpty(node.startToken);
   if (tk.isComma(prevToken)) {
-    ws.limit(prevToken, 'ObjectTypePropertyComma');
+    limit(prevToken, 'ObjectTypePropertyComma');
   } else if (tk.isSemiColon(prevToken)) {
-    ws.limit(prevToken, 'ObjectTypePropertySemiColon');
+    limit(prevToken, 'ObjectTypePropertySemiColon');
   }
 };
 
 hooks.DeclareModule = function(node) {
-  ws.limit(
+  limit(
     node.body.startToken,
     'DeclareModuleOpening'
   );
-  ws.limit(
+  limit(
     node.body.endToken,
     'DeclareModuleClosing'
   );
@@ -236,22 +237,22 @@ hooks.ImportDeclaration = function(node) {
     node.specifiers.forEach(function(spec) {
       var next = tk.findNextNonEmpty(spec.endToken);
       if (tk.isComma(next)) {
-        ws.limit(next, 'ImportSpecifierComma');
+        limit(next, 'ImportSpecifierComma');
       }
     });
 
-    ws.limit(opening, 'ImportSpecifierOpening');
-    ws.limit(closing, 'ImportSpecifierClosing');
+    limit(opening, 'ImportSpecifierOpening');
+    limit(closing, 'ImportSpecifierClosing');
 
     indentNode({startToken: opening, endToken: closing});
   }
 
-  ws.limit(
+  limit(
     tk.findNext(node.startToken, 'type'),
     'ImportTypeKeyword'
   );
 
-  ws.limit(
+  limit(
     tk.findPrev(node.endToken, 'from'),
     'ImportFromKeyword'
   );
@@ -262,11 +263,27 @@ function handleSurroundingParenthesis(node) {
   var prev = tk.findPrevNonEmpty(node.startToken);
   var next = tk.findNextNonEmpty(node.endToken);
   if (prev.value === '(' && next.value === ')') {
-    ws.limit(prev, 0);
-    ws.limit(next, 0);
+    limit(prev, 0);
+    limit(next, 0);
   }
 }
 
 function indentNode(node) {
   indent.inBetween(node.startToken, node.endToken, 1);
+}
+
+function limit(token, optionNameOrValue) {
+  // we can't really use ws.setOptions anymore because npm changed the way
+  // modules are installed/resoved (we would share the same instance as
+  // esformatter)
+  var valueBefore = optionNameOrValue;
+  var valueAfter = optionNameOrValue;
+
+  if (typeof optionNameOrValue === 'string') {
+    valueBefore = whiteSpaceOptions.before[optionNameOrValue];
+    valueAfter = whiteSpaceOptions.after[optionNameOrValue];
+  }
+
+  ws.limitBefore(token, valueBefore);
+  ws.limitAfter(token, valueAfter);
 }
