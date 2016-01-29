@@ -8,10 +8,12 @@ var ws = require('rocambole-whitespace');
 ws.setOptions({
   'value': ' ',
   'before': {
+    'NullableTypeAnnotationQuestionMark': 1,
     'ReturnTypeColon': 0,
     'TypeAnnotationColon': 0,
   },
   'after': {
+    'NullableTypeAnnotationQuestionMark': 0,
     'ReturnTypeColon': 1,
     'TypeAnnotationColon': 1,
   }
@@ -29,6 +31,13 @@ function formatNode(node) {
 function formatTypeAnnotation(node) {
   if (node.type === 'TypeAnnotation') {
     ws.limit(node.startToken, 'TypeAnnotationColon');
+
+    if (node.typeAnnotation.type === 'NullableTypeAnnotation') {
+      ws.limit(
+        node.typeAnnotation.startToken,
+        'NullableTypeAnnotationQuestionMark'
+      );
+    }
   }
 }
 

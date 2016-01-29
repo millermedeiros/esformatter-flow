@@ -19,3 +19,9 @@ class Bar {
     return a + foo('lorem', a);
   }
 }
+
+// maybe types
+// ----------------------------------------------
+// http://flowtype.org/docs/nullable-types.html
+
+var o: ?string = null;
