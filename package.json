@@ -9,6 +9,7 @@
   "dependencies": {
     "disparity": "^2.0.0",
     "esformatter": "^0.8.2",
+    "lodash.defaultsdeep": "^4.0.2",
     "rocambole-token": "^1.2.1",
     "rocambole-whitespace": "^1.0.0"
   },
