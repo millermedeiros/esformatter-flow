@@ -19,6 +19,9 @@
   "scripts": {
     "test": "node test/compare.spec.js"
   },
+  "esformatter": {
+    "root": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/millermedeiros/esformatter-flow.git"

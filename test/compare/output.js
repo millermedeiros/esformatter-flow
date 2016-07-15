@@ -30,6 +30,15 @@ var o: ?string = null;
 var a = [1, 2, 3];
 var b: Array<number> = a.map(x => x + 1);
 
+// TypeParameter
+// -------------
+
+type OneType<Type1> = Type1;
+type TwoTypes<Type1, Type2> = [Type1, Type2];
+
+export default function(one: OneType<string>, two: TwoTypes<string, string>, three: string) {
+}
+
 // union types
 // -----------
 

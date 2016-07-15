@@ -20,13 +20,11 @@ var defaultOptions = {
       'FunctionTypeParamsClosing': 0,
       'FunctionTypeParamsComma': 0,
       'FunctionTypeParamsOpening': 0,
-      'GenericTypeAnnotationClosingChevron': 0,
-      'GenericTypeAnnotationOpeningChevron': 0,
       'ImportFromKeyword': 1,
-      'ImportTypeKeyword': 1,
       'ImportSpecifierClosing': 0,
       'ImportSpecifierComma': 0,
       'ImportSpecifierOpening': 1,
+      'ImportTypeKeyword': 1,
       'IntersectionTypeAnnotationOperator': 1,
       'NullableTypeAnnotationQuestionMark': 1,
       'ObjectTypeAnnotationClosing': 0,
@@ -37,6 +35,9 @@ var defaultOptions = {
       'ReturnTypeColon': 0,
       'TypeAliasOperator': 1,
       'TypeAnnotationColon': 0,
+      'TypeParameterClosingChevron': 0,
+      'TypeParameterComma': 0,
+      'TypeParameterOpeningChevron': 0,
       'UnionTypeAnnotationOperator': 1
     },
     'after': {
@@ -47,23 +48,24 @@ var defaultOptions = {
       'FunctionTypeParamsClosing': 1,
       'FunctionTypeParamsComma': 1,
       'FunctionTypeParamsOpening': 0,
-      'GenericTypeAnnotationClosingChevron': 1,
-      'GenericTypeAnnotationOpeningChevron': 0,
       'ImportFromKeyword': 1,
-      'ImportTypeKeyword': 1,
       'ImportSpecifierClosing': 0,
       'ImportSpecifierComma': 1,
       'ImportSpecifierOpening': 0,
+      'ImportTypeKeyword': 1,
       'IntersectionTypeAnnotationOperator': 1,
+      'NullableTypeAnnotationQuestionMark': 0,
       'ObjectTypeAnnotationClosing': 0,
       'ObjectTypeAnnotationOpening': 0,
       'ObjectTypePropertyColon': 1,
       'ObjectTypePropertyComma': 1,
       'ObjectTypePropertySemiColon': 1,
-      'NullableTypeAnnotationQuestionMark': 0,
       'ReturnTypeColon': 1,
       'TypeAliasOperator': 1,
       'TypeAnnotationColon': 1,
+      'TypeParameterClosingChevron': 1,
+      'TypeParameterComma': 1,
+      'TypeParameterOpeningChevron': 0,
       'UnionTypeAnnotationOperator': 1
     }
   }
@@ -109,21 +111,21 @@ hooks.NullableTypeAnnotation = function(node) {
   );
 };
 
-hooks.GenericTypeAnnotation = function(node) {
-  // Foo
-  var typeParameters = node.typeParameters;
-  if (!typeParameters) return;
-
+hooks.TypeParameterDeclaration = hooks.TypeParameterInstantiation = function(node) {
   // Array<number>
-  limit(
-    typeParameters.startToken,
-    'GenericTypeAnnotationOpeningChevron'
-  );
-  // TODO: handle multiple typeParameters.params
-  limit(
-    typeParameters.endToken,
-    'GenericTypeAnnotationClosingChevron'
-  );
+  // Foo<Bar, Baz>
+
+  limit(node.startToken, 'TypeParameterOpeningChevron');
+
+  node.params.forEach(function(param, i) {
+    if (!i) return;
+    var prev = tk.findPrevNonEmpty(param.startToken);
+    if (prev.value === ',') {
+      limit(prev, 'TypeParameterComma');
+    }
+  });
+
+  limit(node.endToken, 'TypeParameterClosingChevron');
 };
 
 hooks.UnionTypeAnnotation = function(node) {
@@ -244,7 +246,10 @@ hooks.ImportDeclaration = function(node) {
     limit(opening, 'ImportSpecifierOpening');
     limit(closing, 'ImportSpecifierClosing');
 
-    indentNode({startToken: opening, endToken: closing});
+    indentNode({
+      startToken: opening,
+      endToken: closing
+    });
   }
 
   limit(
